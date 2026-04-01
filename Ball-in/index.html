@@ -1,0 +1,693 @@
+<!doctype html>
+<html lang="fr" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LA BOLLINE — Official Legend</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&display=swap"
+      rel="stylesheet"
+    />
+
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: { sans: ["Outfit", "sans-serif"] },
+            colors: {
+              aqua: "#00f2fe",
+              marine: "#4facfe",
+              profondeur: "#061121",
+              gold: "#ffd700",
+              silver: "#e2e8f0",
+            },
+          },
+        },
+      };
+    </script>
+
+    <style>
+      :root {
+        --glass: rgba(255, 255, 255, 0.08);
+        --border: rgba(255, 255, 255, 0.15);
+      }
+
+      body {
+        /* ✅ MODIF : fond plus clair / plus piscine */
+        background: #0e3a5d;
+        background-image:
+          radial-gradient(
+            circle at 30% 20%,
+            rgba(0, 242, 254, 0.35) 0%,
+            transparent 45%
+          ),
+          radial-gradient(
+            circle at 70% 60%,
+            rgba(79, 172, 254, 0.25) 0%,
+            transparent 50%
+          ),
+          radial-gradient(
+            circle at 50% 50%,
+            rgba(15, 52, 67, 0.18) 0%,
+            transparent 60%
+          ),
+          linear-gradient(180deg, #0e3a5d 0%, #0a2742 60%, #061121 100%);
+        color: white;
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+
+      /* Simulation de reflets de surface (caustiques) */
+      body::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: url("https://www.transparenttextures.com/patterns/pinstriped-suit.png"); /* Texture légère pour diffraction */
+        opacity: 0.05;
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      /* Barre de navigation STABILISÉE */
+      .nav-fixed {
+        position: fixed;
+        top: 2rem;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1000;
+        width: 90%;
+        max-width: 1000px;
+        background: rgba(10, 25, 47, 0.7);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        padding: 1rem 2rem;
+        /* Suppression des animations de mouvement qui gênaient le clic */
+      }
+
+      .glass-panel {
+        background: var(--glass);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border: 1px solid var(--border);
+        border-radius: 2.5rem;
+        transition:
+          border-color 0.3s ease,
+          background 0.3s ease;
+      }
+
+      .text-glow {
+        text-shadow: 0 0 20px rgba(0, 242, 254, 0.6);
+      }
+      .gold-glow {
+        text-shadow: 0 0 25px rgba(255, 215, 0, 0.7);
+      }
+      .silver-glow {
+        text-shadow: 0 0 15px rgba(226, 232, 240, 0.4);
+      }
+
+      .btn-gradient {
+        background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+        box-shadow: 0 10px 20px -5px rgba(0, 242, 254, 0.4);
+        transition: transform 0.2s ease;
+      }
+      .btn-gradient:hover {
+        transform: scale(1.05);
+      }
+
+      /* Bulles */
+      .bubble {
+        position: fixed;
+        bottom: -100px;
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 50%;
+        pointer-events: none;
+        animation: rise 15s infinite ease-in;
+        z-index: 0;
+      }
+      @keyframes rise {
+        0% {
+          transform: translateY(0) scale(1);
+          opacity: 0;
+        }
+        20% {
+          opacity: 0.3;
+        }
+        100% {
+          transform: translateY(-120vh) scale(1.5);
+          opacity: 0;
+        }
+      }
+
+      /* === AJOUT : Reflets piscine animés (caustiques + vague légère) === */
+
+      /* couche caustique animée par-dessus le fond */
+      body::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 2; /* au-dessus du ::before mais en-dessous du contenu (z-10) */
+        opacity: 0.18;
+        mix-blend-mode: screen;
+
+        background:
+          radial-gradient(
+            circle at 20% 30%,
+            rgba(0, 242, 254, 0.25) 0%,
+            transparent 35%
+          ),
+          radial-gradient(
+            circle at 80% 20%,
+            rgba(79, 172, 254, 0.18) 0%,
+            transparent 40%
+          ),
+          radial-gradient(
+            circle at 50% 80%,
+            rgba(0, 242, 254, 0.14) 0%,
+            transparent 45%
+          ),
+          conic-gradient(
+            from 90deg at 50% 50%,
+            rgba(255, 255, 255, 0.08),
+            transparent,
+            rgba(255, 255, 255, 0.06),
+            transparent
+          );
+        filter: blur(1px);
+        animation: poolCaustics 10s ease-in-out infinite;
+      }
+
+      @keyframes poolCaustics {
+        0% {
+          transform: translate3d(0, 0, 0) scale(1);
+        }
+        50% {
+          transform: translate3d(0, -10px, 0) scale(1.03);
+        }
+        100% {
+          transform: translate3d(0, 0, 0) scale(1);
+        }
+      }
+
+      /* accentuer un peu la texture existante */
+      body::before {
+        opacity: 0.07; /* était 0.05 */
+        filter: blur(0.2px);
+      }
+
+      /* === AJOUT : Bulles plus réalistes === */
+      .bubble {
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 0 25px rgba(0, 242, 254, 0.12);
+        filter: blur(0.2px);
+      }
+
+      @keyframes rise {
+        0% {
+          transform: translateY(0) translateX(0) scale(0.9);
+          opacity: 0;
+        }
+        15% {
+          opacity: 0.35;
+        }
+        70% {
+          opacity: 0.2;
+        }
+        100% {
+          transform: translateY(-120vh) translateX(var(--drift, 0px)) scale(1.6);
+          opacity: 0;
+        }
+      }
+    </style>
+  </head>
+
+  <body class="font-sans antialiased">
+    <div
+      class="bubble"
+      style="left: 5%; width: 40px; height: 40px; animation-delay: 0s"
+    ></div>
+    <div
+      class="bubble"
+      style="left: 25%; width: 20px; height: 20px; animation-delay: 3s"
+    ></div>
+    <div
+      class="bubble"
+      style="left: 45%; width: 50px; height: 50px; animation-delay: 6s"
+    ></div>
+    <div
+      class="bubble"
+      style="left: 65%; width: 30px; height: 30px; animation-delay: 2s"
+    ></div>
+    <div
+      class="bubble"
+      style="left: 85%; width: 45px; height: 45px; animation-delay: 8s"
+    ></div>
+
+    <nav class="nav-fixed flex items-center justify-between">
+      <div
+        class="font-black text-2xl tracking-tighter flex items-center gap-2 uppercase italic text-aqua text-glow"
+      >
+        LA BOLLINE
+      </div>
+      <div
+        class="hidden md:flex gap-10 text-[10px] font-bold uppercase tracking-[0.2em] opacity-80"
+      >
+        <a href="#regles" class="hover:text-aqua transition-colors">Règles</a>
+        <a href="#origine" class="hover:text-aqua transition-colors">Lecci</a>
+        <a href="#palmares" class="hover:text-aqua transition-colors"
+          >Légendes</a
+        >
+      </div>
+      <a
+        href="#regles"
+        class="btn-gradient text-profondeur text-[10px] font-black px-6 py-2.5 rounded-full uppercase tracking-widest"
+        >Plonger</a
+      >
+      <a
+        href="jeu.html"
+        class="btn-gradient text-profondeur text-[10px] font-black px-6 py-2.5 rounded-full uppercase tracking-widest"
+      >
+        Jouer
+      </a>
+    </nav>
+
+    <header class="relative pt-60 pb-32 px-6 text-center z-10">
+      <div
+        class="inline-block px-4 py-1 mb-6 rounded-full border border-aqua/30 bg-aqua/10 text-aqua text-[10px] font-black uppercase tracking-[0.3em]"
+      >
+        Originellement né à Nuit Saint Georges • Été 2020
+      </div>
+      <h1
+        class="text-7xl md:text-[100px] font-[900] leading-[0.9] mb-8 tracking-tighter italic uppercase"
+      >
+        LE REBOND <br />
+        <span class="text-aqua text-glow">EST LOI.</span>
+      </h1>
+      <p
+        class="max-w-xl mx-auto text-lg text-slate-300 font-light leading-relaxed mb-12"
+      >
+        L'anarchie des piscines a pris fin en Bourgogne. Rémy et ses copains ont
+        tracé les lignes. <br />
+        <span class="text-white/80 font-medium italic"
+          >Le chlore est juge, la bordure est reine.</span
+        >
+      </p>
+    </header>
+
+    <!-- === AJOUT : Section phrase fétiche === -->
+    <section class="max-w-3xl mx-auto px-6 -mt-10 mb-20 relative z-10">
+      <div
+        class="glass-panel p-8 md:p-10 text-center border-aqua/20 bg-gradient-to-r from-aqua/10 via-white/5 to-marine/10"
+      >
+        <p
+          class="text-[10px] font-black uppercase tracking-[0.5em] opacity-60 mb-3"
+        >
+          Phrase fétiche
+        </p>
+        <p
+          class="text-4xl md:text-5xl font-[900] italic uppercase tracking-tighter text-glow"
+        >
+          C'est la Bolline !!!
+        </p>
+        <p class="mt-4 text-slate-300 text-sm italic">
+          À prononcer avant tout service, après tout point, et parfois sans
+          raison.
+        </p>
+      </div>
+    </section>
+
+    <main
+      id="regles"
+      class="max-w-6xl mx-auto px-6 grid grid-cols-1 md:grid-cols-12 gap-6 pb-40 relative z-10"
+    >
+      <div
+        class="md:col-span-8 glass-panel p-10 flex flex-col justify-center relative overflow-hidden group"
+      >
+        <div
+          class="absolute -right-20 -top-20 w-64 h-64 bg-aqua/10 rounded-full blur-3xl transition-all"
+        ></div>
+        <h2 class="text-3xl font-black mb-6 italic uppercase">Le Concept</h2>
+        <p class="text-slate-200 text-lg leading-relaxed max-w-xl">
+          Deux extrémités, un ballon, un rebond dans l'eau. Pour marquer, visez
+          le fond de la bordure adverse ou le vide derrière le lanceur.
+          <span class="text-white font-bold block mt-4 italic"
+            >Simplicité. Nerfs. Précision.</span
+          >
+        </p>
+      </div>
+
+      <div
+        class="md:col-span-4 glass-panel bg-gradient-to-br from-aqua/20 to-marine/20 p-10 flex flex-col items-center justify-center text-center border-aqua/30"
+      >
+        <p
+          class="text-[10px] font-black uppercase tracking-[0.4em] mb-4 opacity-60"
+        >
+          Status Quo
+        </p>
+        <div class="text-7xl font-[900] tracking-tighter text-glow italic">
+          5<span class="text-aqua">—</span>5
+        </div>
+        <p
+          class="mt-4 text-xs font-bold text-aqua/80 tracking-widest uppercase italic"
+        >
+          Start mid-game. Fin à 0 ou 10.
+        </p>
+      </div>
+
+      <div class="md:col-span-4 glass-panel p-8">
+        <div
+          class="w-10 h-10 rounded-full bg-aqua/20 flex items-center justify-center text-aqua mb-6 shadow-[0_0_15px_rgba(0,242,254,0.3)]"
+        >
+          ✓
+        </div>
+        <h3
+          class="text-sm font-black uppercase tracking-widest mb-4 opacity-50"
+        >
+          Règle Cœur
+        </h3>
+        <p class="text-lg font-bold italic">Eau → Bordure.</p>
+        <p class="text-sm text-slate-400 mt-2 font-light">
+          Le rebond aquatique est obligatoire pour valider l'impact. L'eau est
+          le premier contact requis.
+        </p>
+      </div>
+
+      <div class="md:col-span-4 glass-panel p-8 border-aqua/30 bg-aqua/5">
+        <div
+          class="w-10 h-10 rounded-full bg-aqua/20 flex items-center justify-center text-aqua mb-6"
+        >
+          🎯
+        </div>
+        <h3 class="text-sm font-black uppercase tracking-widest mb-4">Cible</h3>
+        <p class="text-lg font-bold italic">Fond ou Vide.</p>
+        <p class="text-sm text-slate-400 mt-2 font-light">
+          Le point est validé si le ballon touche la bordure adverse ou finit sa
+          course dans le vide derrière le lanceur adverse.
+        </p>
+      </div>
+
+      <div class="md:col-span-4 glass-panel border-red-500/20 p-8 group">
+        <div
+          class="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center text-red-400 mb-6"
+        >
+          !
+        </div>
+        <h3
+          class="text-sm font-black uppercase tracking-widest mb-4 text-red-400/60"
+        >
+          Pénalité
+        </h3>
+        <p class="text-lg font-bold italic">Sortie = -1.</p>
+        <p class="text-sm text-slate-400 mt-2 font-light italic text-balance">
+          La Bolline punit l'imprécision sans pitié. Toute sortie de bassin est
+          sanctionnée.
+        </p>
+      </div>
+    </main>
+
+    <section id="origine" class="max-w-6xl mx-auto px-6 mb-40 relative z-10">
+      <div
+        class="glass-panel p-12 md:p-20 relative overflow-hidden border-white/5"
+      >
+        <div class="relative z-10 grid lg:grid-cols-2 gap-16 items-center">
+          <div>
+            <h2 class="text-5xl font-black italic mb-8 leading-tight uppercase">
+              L'ÉTÉ OÙ TOUT <br />
+              A CHANGÉ.
+            </h2>
+            <div
+              class="space-y-6 text-slate-300 text-lg font-light leading-relaxed"
+            >
+              <p>
+                Nuit Saint Georges, Bourgogne. Été 2020. Entre deux siestes et
+                une trempouille,
+                <span class="text-white font-bold"
+                  >Rémy et une bande de farfadets</span
+                >
+                décident de mettre fin à l'anarchie des lancers de ballons au
+                nez.
+              </p>
+              <p class="italic text-white/80 font-medium">
+                "Chacun à une extrémité, un rebond dans l'eau, et on voit qui
+                survit."
+              </p>
+              <p>
+                La Bolline était née. Pas de cages, juste de l'adresse et les
+                verres à moitié plein des vins de Bourgogne pour témoin.
+              </p>
+            </div>
+          </div>
+          <div
+            class="bg-white/5 rounded-[2rem] p-8 border border-white/10 text-center"
+          >
+            <h4
+              class="font-bold text-aqua mb-6 uppercase tracking-widest text-xs italic"
+            >
+              Chronologie
+            </h4>
+            <ul class="space-y-6">
+              <li class="flex flex-col items-center">
+                <span class="font-black text-white text-2xl uppercase"
+                  >Été 2020</span
+                >
+                <span class="text-sm text-slate-500 italic"
+                  >Genèse à Lecci, Corse.</span
+                >
+              </li>
+              <li class="flex flex-col items-center">
+                <span class="font-black text-white text-2xl uppercase"
+                  >2022</span
+                >
+                <span class="text-sm text-slate-500 italic"
+                  >Codification de la Bouée d'Or.</span
+                >
+              </li>
+              <li class="flex flex-col items-center">
+                <span
+                  class="font-black text-aqua italic text-glow text-2xl uppercase"
+                  >2026</span
+                >
+                <span
+                  class="text-sm text-white font-bold uppercase tracking-tighter"
+                  >Officialisation Globale.</span
+                >
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="max-w-6xl mx-auto px-6 mb-40 relative z-10">
+      <div
+        class="glass-panel p-12 md:p-20 border-aqua/20 bg-gradient-to-tr from-profondeur to-aqua/10"
+      >
+        <h2 class="text-5xl font-black italic mb-8 uppercase text-glow">
+          L'Uniforme : Le Moule-Bite
+        </h2>
+        <div
+          class="grid md:grid-cols-2 gap-12 text-slate-300 text-lg font-light leading-relaxed italic"
+        >
+          <p>
+            À la Bolline, l'élégance est indissociable de la performance. Le
+            port du <span class="text-white font-bold">moule-bite</span> n'est
+            pas une simple suggestion esthétique, c'est un impératif technique.
+            Là où le short de bain classique freine et se gorge d'eau, le
+            moule-bite offre un aérodynamisme parfait.
+          </p>
+          <p>
+            Il permet une liberté de mouvement absolue pour les pivots rapides
+            et garantit que rien ne viendra perturber la trajectoire du corps
+            lors des réceptions les plus périlleuses.
+            <span class="text-aqua font-bold"
+              >Porter le moule-bite, c'est respecter l'essence même du
+              jeu.</span
+            >
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section id="palmares" class="max-w-5xl mx-auto px-6 mb-40 relative z-10">
+      <h2
+        class="text-center text-4xl font-[900] italic uppercase mb-16 tracking-tighter text-glow"
+      >
+        Hall of Fame <span class="text-gold">🏆</span>
+      </h2>
+
+      <div
+        class="glass-panel p-1 w-full overflow-hidden border-white/10 shadow-2xl bg-white/5"
+      >
+        <div class="flex flex-col md:flex-row items-stretch">
+          <div
+            class="flex-1 p-12 text-center bg-gradient-to-br from-gold/15 to-transparent border-b md:border-b-0 md:border-r border-white/5"
+          >
+            <div class="mb-6 inline-block relative">
+              <div
+                class="w-24 h-24 rounded-full bg-gold/20 flex items-center justify-center text-5xl border border-gold/50 shadow-[0_0_40px_rgba(255,215,0,0.4)]"
+              >
+                🥇
+              </div>
+              <div
+                class="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-gold text-profondeur text-[8px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest"
+              >
+                Champion
+              </div>
+            </div>
+            <h3
+              class="text-6xl font-[900] italic gold-glow tracking-tighter mb-4 uppercase"
+            >
+              RÉMY
+            </h3>
+            <p
+              class="text-[10px] font-black text-gold uppercase tracking-[0.5em] mb-6 italic"
+            >
+              Gagnant Originel
+            </p>
+            <div class="text-8xl font-black italic gold-glow">10</div>
+          </div>
+
+          <div
+            class="w-full md:w-24 flex items-center justify-center py-8 md:py-0 bg-white/5"
+          >
+            <span class="text-3xl font-black opacity-20 italic">VS</span>
+          </div>
+
+          <div
+            class="flex-1 p-12 text-center bg-gradient-to-bl from-white/10 to-transparent opacity-80"
+          >
+            <div class="mb-6 inline-block relative">
+              <div
+                class="w-24 h-24 rounded-full bg-white/10 flex items-center justify-center text-5xl border border-white/20 shadow-[0_0_20px_rgba(255,255,255,0.1)]"
+              >
+                🥈
+              </div>
+              <div
+                class="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-slate-400 text-profondeur text-[8px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest"
+              >
+                Finaliste
+              </div>
+            </div>
+            <h3
+              class="text-6xl font-[900] italic text-slate-300 tracking-tighter mb-4 silver-glow uppercase"
+            >
+              RENAUD
+            </h3>
+            <p
+              class="text-[10px] font-black text-slate-400 uppercase tracking-[0.5em] mb-6 italic"
+            >
+              Légende Honorable
+            </p>
+            <div class="text-8xl font-black italic text-slate-300 silver-glow">
+              8
+            </div>
+          </div>
+        </div>
+      </div>
+      <p
+        class="text-center mt-8 text-[10px] font-bold text-slate-500 uppercase tracking-[0.5em] italic"
+      >
+        Finale historique • Nuit Saint Georges, Bourgogne • Été 2020
+      </p>
+    </section>
+
+    <section class="max-w-2xl mx-auto px-6 py-20 text-center relative z-10">
+      <h2
+        class="text-2xl font-black italic mb-12 opacity-50 uppercase tracking-widest"
+      >
+        Protocoles & FAQ
+      </h2>
+      <div class="space-y-4 text-left">
+        <details
+          class="group glass-panel p-8 cursor-pointer hover:bg-white/10 transition-colors border-white/10"
+        >
+          <summary
+            class="flex items-center justify-between font-black list-none uppercase text-xs tracking-widest"
+          >
+            Pourquoi 5–5 ?
+            <span
+              class="text-aqua transition-transform group-open:rotate-45 text-xl"
+              >+</span
+            >
+          </summary>
+          <p
+            class="mt-6 text-slate-400 text-lg font-light italic leading-relaxed"
+          >
+            Pour supprimer le confort. Chaque point doit être une menace
+            immédiate. On ne gagne pas par endurance, mais par la gestion de la
+            pression à chaque instant.
+          </p>
+        </details>
+        <details
+          class="group glass-panel p-8 cursor-pointer hover:bg-white/10 transition-colors border-white/10"
+        >
+          <summary
+            class="flex items-center justify-between font-black list-none uppercase text-xs tracking-widest"
+          >
+            Le -1 est-il discutable ?
+            <span
+              class="text-aqua transition-transform group-open:rotate-45 text-xl"
+              >+</span
+            >
+          </summary>
+          <p
+            class="mt-6 text-slate-400 text-lg font-light italic leading-relaxed"
+          >
+            Non. L'arrogance de viser hors-piscine se paie cash. La Bolline est
+            un jeu de précision chirurgicale, pas de force brute. La sortie est
+            un échec total.
+          </p>
+        </details>
+      </div>
+    </section>
+
+    <footer class="py-24 text-center opacity-40 relative z-10">
+      <p
+        class="font-black text-2xl italic tracking-tighter mb-2 text-glow uppercase"
+      >
+        LA BOLLINE
+      </p>
+      <p class="text-[10px] uppercase tracking-[0.6em]">
+        Lecci • Corse • Été 2020
+      </p>
+    </footer>
+
+    <script>
+      // === AJOUT : générateur de bulles (garde tes 5 bulles existantes) ===
+      (function makeBubbles() {
+        const COUNT = 18; // ajuste 12–30 selon ton goût
+
+        for (let i = 0; i < COUNT; i++) {
+          const b = document.createElement("div");
+          b.className = "bubble";
+
+          // position / taille / durée aléatoires
+          const size = 10 + Math.random() * 55; // 10px → 65px
+          const left = Math.random() * 100; // 0% → 100%
+          const delay = Math.random() * 10; // 0s → 10s
+          const duration = 10 + Math.random() * 18; // 10s → 28s
+          const drift = (Math.random() * 140 - 70).toFixed(0) + "px"; // -70px → +70px
+
+          b.style.left = left + "%";
+          b.style.width = size + "px";
+          b.style.height = size + "px";
+          b.style.animationDelay = delay + "s";
+          b.style.animationDuration = duration + "s";
+          b.style.setProperty("--drift", drift);
+
+          // petite variation d’opacité
+          b.style.background = `rgba(255,255,255,${0.08 + Math.random() * 0.1})`;
+
+          document.body.appendChild(b);
+        }
+      })();
+    </script>
+  </body>
+</html>

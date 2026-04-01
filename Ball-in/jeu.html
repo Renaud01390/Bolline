@@ -1,0 +1,848 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LA BOLLINE — Jeu 2D</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+      }
+      body {
+        background: #061121;
+        background-image:
+          radial-gradient(
+            circle at 30% 20%,
+            rgba(0, 242, 254, 0.25) 0%,
+            transparent 45%
+          ),
+          radial-gradient(
+            circle at 70% 60%,
+            rgba(79, 172, 254, 0.18) 0%,
+            transparent 50%
+          ),
+          linear-gradient(180deg, #0e3a5d 0%, #0a2742 60%, #061121 100%);
+        color: #fff;
+        font-family:
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          sans-serif;
+        overflow-x: hidden;
+      }
+      .glass {
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 22px;
+        backdrop-filter: blur(14px);
+      }
+      canvas {
+        border-radius: 22px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(255, 255, 255, 0.04);
+        display: block;
+        max-width: 100%;
+        height: auto;
+      }
+      kbd {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-bottom-width: 2px;
+        padding: 2px 6px;
+        border-radius: 10px;
+        font-weight: 800;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen">
+    <div class="max-w-6xl mx-auto px-4 py-6">
+      <div
+        class="flex flex-col md:flex-row md:items-end md:justify-between gap-4"
+      >
+        <div>
+          <div
+            class="text-xs font-black uppercase tracking-[0.35em] text-white/60"
+          >
+            Mode Arcade
+          </div>
+          <h1
+            class="text-4xl md:text-5xl font-black italic uppercase tracking-tight"
+          >
+            Bolline 2D — Déplacements & Endurance
+          </h1>
+          <p class="mt-2 text-white/75 max-w-3xl">
+            Vue du dessus. Joueurs sur les extrémités
+            <span class="font-bold">courtes</span> (gauche/droite). Tu peux
+            défendre en avançant/reculant. Bouger consomme de l’endurance,
+            rester calme la recharge.
+          </p>
+        </div>
+
+        <div class="flex flex-wrap gap-3">
+          <a
+            href="index.html"
+            class="glass px-4 py-2 text-xs font-black uppercase tracking-widest hover:bg-white/10"
+          >
+            ← Retour site
+          </a>
+          <button
+            id="resetMatch"
+            class="glass px-4 py-2 text-xs font-black uppercase tracking-widest hover:bg-white/10"
+          >
+            Reset match (5–5)
+          </button>
+        </div>
+      </div>
+
+      <div class="mt-5 grid lg:grid-cols-12 gap-4">
+        <div class="lg:col-span-9 glass p-4">
+          <canvas id="c" width="980" height="560"></canvas>
+          <div
+            class="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-white/70"
+          >
+            <span class="glass px-3 py-2"
+              >Tir: <kbd>clic</kbd> + <kbd>drag</kbd> puis relâche</span
+            >
+            <span class="glass px-3 py-2"
+              >Gauche: <kbd>W</kbd><kbd>S</kbd> + <kbd>A</kbd><kbd>D</kbd></span
+            >
+            <span class="glass px-3 py-2"
+              >Droite: <kbd>↑</kbd><kbd>↓</kbd> + <kbd>←</kbd><kbd>→</kbd></span
+            >
+            <span class="glass px-3 py-2">Reset balle: <kbd>Espace</kbd></span>
+          </div>
+        </div>
+
+        <div class="lg:col-span-3 space-y-4">
+          <div class="glass p-4">
+            <div
+              class="text-xs font-black uppercase tracking-[0.35em] text-white/60"
+            >
+              Score
+            </div>
+            <div id="score" class="text-3xl font-black italic mt-1">5 — 5</div>
+            <div class="text-xs text-white/70 mt-1">
+              Fin à 0 (perd) ou 10 (gagne)
+            </div>
+          </div>
+
+          <div class="glass p-4">
+            <div
+              class="text-xs font-black uppercase tracking-[0.35em] text-white/60"
+            >
+              Tour
+            </div>
+            <div id="turn" class="text-2xl font-black italic mt-1">—</div>
+            <div id="msg" class="text-sm font-bold text-white/80 mt-2">
+              Prêt.
+            </div>
+          </div>
+
+          <div class="glass p-4">
+            <div
+              class="text-xs font-black uppercase tracking-[0.35em] text-white/60"
+            >
+              Endurance
+            </div>
+            <div class="mt-2 space-y-2 text-sm text-white/75">
+              <div class="flex items-center justify-between">
+                <span>Joueur 1</span>
+                <span id="stamL">100</span>
+              </div>
+              <div class="h-2 rounded-full bg-white/10 overflow-hidden">
+                <div
+                  id="barL"
+                  class="h-2 w-full"
+                  style="background: rgba(0, 242, 254, 0.85)"
+                ></div>
+              </div>
+
+              <div class="flex items-center justify-between mt-3">
+                <span>Joueur 2</span>
+                <span id="stamR">100</span>
+              </div>
+              <div class="h-2 rounded-full bg-white/10 overflow-hidden">
+                <div
+                  id="barR"
+                  class="h-2 w-full"
+                  style="background: rgba(255, 215, 0, 0.85)"
+                ></div>
+              </div>
+
+              <p class="mt-3 text-xs text-white/55 italic">
+                Bouger = ça descend. Ne pas bouger = ça remonte. Vitesse réduite
+                quand t’es cramé.
+              </p>
+            </div>
+          </div>
+
+          <div class="glass p-4">
+            <div
+              class="text-xs font-black uppercase tracking-[0.35em] text-white/60"
+            >
+              Règles (jeu)
+            </div>
+            <ul class="mt-2 text-sm text-white/75 space-y-1">
+              <li>
+                • Point: eau puis touche
+                <span class="font-bold">mur adverse</span> à vitesse raisonnable
+              </li>
+              <li>
+                • Bourrin au mur adverse →
+                <span class="font-bold">sortie derrière</span> (-1)
+              </li>
+              <li>• Sortie bassin → <span class="font-bold">-1</span></li>
+              <li>• Boosters changent à chaque échange</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (() => {
+        const canvas = document.getElementById("c");
+        const ctx = canvas.getContext("2d");
+
+        const uiScore = document.getElementById("score");
+        const uiTurn = document.getElementById("turn");
+        const uiMsg = document.getElementById("msg");
+
+        const uiStamL = document.getElementById("stamL");
+        const uiStamR = document.getElementById("stamR");
+        const barL = document.getElementById("barL");
+        const barR = document.getElementById("barR");
+
+        // Piscine (longue horizontalement)
+        const pool = { x: 90, y: 70, w: 800, h: 420 };
+
+        // Zones de déplacement (chaque joueur dans une "bande" de son côté)
+        const leftZone = { xMin: pool.x + 20, xMax: pool.x + pool.w * 0.46 };
+        const rightZone = {
+          xMin: pool.x + pool.w * 0.54,
+          xMax: pool.x + pool.w - 20,
+        };
+
+        // Joueurs
+        const pL = {
+          name: "Joueur 1",
+          side: "L",
+          x: pool.x + 60,
+          y: pool.y + pool.h / 2,
+          r: 18,
+          baseSpeed: 5.8,
+          color: "#00f2fe",
+          stamina: 100,
+        };
+        const pR = {
+          name: "Joueur 2",
+          side: "R",
+          x: pool.x + pool.w - 60,
+          y: pool.y + pool.h / 2,
+          r: 18,
+          baseSpeed: 5.8,
+          color: "#ffd700",
+          stamina: 100,
+        };
+        const players = [pL, pR];
+
+        let scoreL = 5,
+          scoreR = 5;
+        let turn = 0; // 0 = gauche tire, 1 = droite tire
+
+        const ball = {
+          r: 10,
+          x: 0,
+          y: 0,
+          vx: 0,
+          vy: 0,
+          moving: false,
+          touchedWater: false,
+          lastShooter: 0,
+        };
+
+        // Physique
+        const wallBounce = 0.86;
+        const friction = 0.993;
+        const minStop = 0.09;
+
+        // Punition puissance
+        const tooStrongWallSpeed = 17.0; // haut/bas
+        const tooStrongGoalSpeed = 16.2; // mur adverse
+        const maxLaunchPower = 21.0;
+
+        // Endurance
+        const staminaDrainPerFrame = 0.22; // si mouvement (par frame)
+        const staminaRegenPerFrame = 0.28; // si immobile (par frame)
+        const staminaMinSpeedFactor = 0.35; // vitesse min même cramé
+        const staminaMaxSpeedFactor = 1.0;
+
+        // Boosters
+        const boosters = [];
+        const boosterCount = 7;
+        const boosterR = 9;
+        const boosterPush = 1.16;
+        const boosterKick = 0.24;
+        const boosterCooldownMs = 420;
+
+        // Input
+        const keys = new Set();
+        window.addEventListener("keydown", (e) => {
+          keys.add(e.code);
+          if (e.code === "Space") {
+            resetBallToShooter();
+            setMsg("Reset balle.");
+          }
+        });
+        window.addEventListener("keyup", (e) => keys.delete(e.code));
+
+        document.getElementById("resetMatch").addEventListener("click", () => {
+          scoreL = 5;
+          scoreR = 5;
+          turn = 0;
+          pL.stamina = 100;
+          pR.stamina = 100;
+          startRally("Reset match (5–5).");
+        });
+
+        function rnd(a, b) {
+          return a + Math.random() * (b - a);
+        }
+        function clamp(v, a, b) {
+          return Math.max(a, Math.min(b, v));
+        }
+        function setMsg(t) {
+          uiMsg.textContent = t;
+        }
+
+        function updateUI() {
+          uiScore.textContent = `${scoreL} — ${scoreR}`;
+          uiTurn.textContent =
+            turn === 0 ? `${pL.name} (gauche)` : `${pR.name} (droite)`;
+
+          uiStamL.textContent = Math.round(pL.stamina);
+          uiStamR.textContent = Math.round(pR.stamina);
+          barL.style.width = `${clamp(pL.stamina, 0, 100)}%`;
+          barR.style.width = `${clamp(pR.stamina, 0, 100)}%`;
+        }
+
+        function insidePool(x, y) {
+          return (
+            x >= pool.x &&
+            x <= pool.x + pool.w &&
+            y >= pool.y &&
+            y <= pool.y + pool.h
+          );
+        }
+
+        function ballHitsDefender(def) {
+          const dx = ball.x - def.x;
+          const dy = ball.y - def.y;
+          return Math.hypot(dx, dy) <= ball.r + def.r;
+        }
+
+        function resetBallToShooter() {
+          const shooter = players[turn];
+          const jitterY = rnd(-28, 28);
+
+          ball.x = shooter.x + (shooter.side === "L" ? 34 : -34);
+          ball.y = clamp(
+            shooter.y + jitterY,
+            pool.y + ball.r + 2,
+            pool.y + pool.h - ball.r - 2,
+          );
+
+          ball.vx = 0;
+          ball.vy = 0;
+          ball.moving = false;
+          ball.touchedWater = false;
+          ball.lastShooter = turn;
+        }
+
+        function spawnBoosters() {
+          boosters.length = 0;
+          const marginX = 160;
+          const marginY = 26;
+          for (let i = 0; i < boosterCount; i++) {
+            boosters.push({
+              x: rnd(pool.x + marginX, pool.x + pool.w - marginX),
+              y: rnd(pool.y + marginY, pool.y + pool.h - marginY),
+              r: boosterR,
+              lastHit: -999999,
+            });
+          }
+        }
+
+        function startRally(message) {
+          spawnBoosters();
+          resetBallToShooter();
+          updateUI();
+          setMsg(message || `À ${players[turn].name} de jouer.`);
+        }
+
+        function endTurn(message) {
+          turn = 1 - turn;
+          startRally(message || `À ${players[turn].name} de jouer.`);
+        }
+
+        function applyScore(shooter, delta, reason) {
+          if (shooter === 0) scoreL += delta;
+          else scoreR += delta;
+          scoreL = clamp(scoreL, 0, 10);
+          scoreR = clamp(scoreR, 0, 10);
+          updateUI();
+          setMsg(reason);
+
+          if (scoreL === 10 || scoreR === 10) {
+            setMsg(`🏆 ${scoreL === 10 ? pL.name : pR.name} gagne (10) !`);
+            ball.moving = false;
+            return true;
+          }
+          if (scoreL === 0 || scoreR === 0) {
+            setMsg(`💀 ${scoreL === 0 ? pL.name : pR.name} perd (0) !`);
+            ball.moving = false;
+            return true;
+          }
+          return false;
+        }
+
+        function applyStaminaAndMove(player, dx, dy, zone) {
+          // vitesse dépend stamina
+          const t = clamp(player.stamina / 100, 0, 1);
+          const speedFactor =
+            staminaMinSpeedFactor +
+            (staminaMaxSpeedFactor - staminaMinSpeedFactor) * t;
+          const speed = player.baseSpeed * speedFactor;
+
+          // mouvement
+          const moving = dx !== 0 || dy !== 0;
+          if (moving) {
+            player.x += dx * speed;
+            player.y += dy * speed;
+            player.stamina = clamp(
+              player.stamina - staminaDrainPerFrame,
+              0,
+              100,
+            );
+          } else {
+            player.stamina = clamp(
+              player.stamina + staminaRegenPerFrame,
+              0,
+              100,
+            );
+          }
+
+          // clamp zone + piscine
+          player.x = clamp(
+            player.x,
+            zone.xMin + player.r,
+            zone.xMax - player.r,
+          );
+          player.y = clamp(
+            player.y,
+            pool.y + player.r,
+            pool.y + pool.h - player.r,
+          );
+        }
+
+        function movePlayers() {
+          // Gauche: W/S + A/D
+          let dxL = 0,
+            dyL = 0;
+          if (keys.has("KeyW")) dyL -= 1;
+          if (keys.has("KeyS")) dyL += 1;
+          if (keys.has("KeyA")) dxL -= 1;
+          if (keys.has("KeyD")) dxL += 1;
+
+          // Droite: Arrows
+          let dxR = 0,
+            dyR = 0;
+          if (keys.has("ArrowUp")) dyR -= 1;
+          if (keys.has("ArrowDown")) dyR += 1;
+          if (keys.has("ArrowLeft")) dxR -= 1;
+          if (keys.has("ArrowRight")) dxR += 1;
+
+          // normalise diagonale (éviter vitesse *1.41)
+          if (dxL && dyL) {
+            dxL *= 0.7071;
+            dyL *= 0.7071;
+          }
+          if (dxR && dyR) {
+            dxR *= 0.7071;
+            dyR *= 0.7071;
+          }
+
+          applyStaminaAndMove(pL, dxL, dyL, leftZone);
+          applyStaminaAndMove(pR, dxR, dyR, rightZone);
+        }
+
+        function handleBoosters() {
+          const now = performance.now();
+          for (const b of boosters) {
+            const dx = ball.x - b.x;
+            const dy = ball.y - b.y;
+            const d = Math.hypot(dx, dy);
+            if (d <= ball.r + b.r) {
+              if (now - b.lastHit < boosterCooldownMs) continue;
+              b.lastHit = now;
+
+              const speed = Math.hypot(ball.vx, ball.vy);
+              if (speed < 0.0001) continue;
+
+              let ang = Math.atan2(ball.vy, ball.vx);
+              const side = Math.sign(dx) || 1;
+              ang += side * boosterKick * (0.6 + Math.random() * 0.6);
+
+              const newSpeed = Math.min(29, speed * boosterPush + 0.5);
+              ball.vx = Math.cos(ang) * newSpeed;
+              ball.vy = Math.sin(ang) * newSpeed;
+            }
+          }
+        }
+
+        // Preview (rebonds haut/bas uniquement)
+        function predictPath(fromX, fromY, vx, vy, steps = 220) {
+          const pts = [];
+          let x = fromX,
+            y = fromY;
+          let pvx = vx,
+            pvy = vy;
+
+          const top = pool.y + ball.r;
+          const bottom = pool.y + pool.h - ball.r;
+          const leftGoal = pool.x;
+          const rightGoal = pool.x + pool.w;
+
+          for (let i = 0; i < steps; i++) {
+            x += pvx;
+            y += pvy;
+            pts.push([x, y]);
+
+            if (y < top) {
+              y = top;
+              pvy = -pvy * wallBounce;
+            }
+            if (y > bottom) {
+              y = bottom;
+              pvy = -pvy * wallBounce;
+            }
+
+            if (turn === 0 && x >= rightGoal) break;
+            if (turn === 1 && x <= leftGoal) break;
+
+            if (!insidePool(x, y)) break;
+          }
+          return pts;
+        }
+
+        function updatePhysics() {
+          if (!ball.moving) return;
+
+          ball.x += ball.vx;
+          ball.y += ball.vy;
+
+          if (!ball.touchedWater && insidePool(ball.x, ball.y))
+            ball.touchedWater = true;
+
+          const def = ball.lastShooter === 0 ? pR : pL;
+          if (ballHitsDefender(def)) {
+            ball.moving = false;
+            ball.vx = 0;
+            ball.vy = 0;
+            endTurn(`🛡️ Défense de ${def.name} ! Pas de point.`);
+            return;
+          }
+
+          // rebonds haut/bas, sauf trop puissant => sortie (-1)
+          const top = pool.y + ball.r;
+          const bottom = pool.y + pool.h - ball.r;
+
+          if (ball.y < top || ball.y > bottom) {
+            const speed = Math.hypot(ball.vx, ball.vy);
+            if (speed > tooStrongWallSpeed) {
+              const done = applyScore(
+                ball.lastShooter,
+                -1,
+                `❌ Trop puissant: sortie (-1).`,
+              );
+              if (!done)
+                endTurn(`À ${players[1 - ball.lastShooter].name} de jouer.`);
+              return;
+            }
+            if (ball.y < top) {
+              ball.y = top;
+              ball.vy = -ball.vy * wallBounce;
+            } else {
+              ball.y = bottom;
+              ball.vy = -ball.vy * wallBounce;
+            }
+          }
+
+          handleBoosters();
+
+          const leftGoal = pool.x;
+          const rightGoal = pool.x + pool.w;
+          const speedNow = Math.hypot(ball.vx, ball.vy);
+
+          if (ball.touchedWater) {
+            if (ball.lastShooter === 0 && ball.x >= rightGoal) {
+              if (speedNow > tooStrongGoalSpeed) {
+                const done = applyScore(
+                  0,
+                  -1,
+                  `❌ Trop puissant: ça sort derrière (-1).`,
+                );
+                if (!done) endTurn(`À ${pR.name} de jouer.`);
+                return;
+              }
+              const done = applyScore(
+                0,
+                +1,
+                `✅ Point: Eau → bordure adverse.`,
+              );
+              if (!done) endTurn(`À ${pR.name} de jouer.`);
+              return;
+            }
+            if (ball.lastShooter === 1 && ball.x <= leftGoal) {
+              if (speedNow > tooStrongGoalSpeed) {
+                const done = applyScore(
+                  1,
+                  -1,
+                  `❌ Trop puissant: ça sort derrière (-1).`,
+                );
+                if (!done) endTurn(`À ${pL.name} de jouer.`);
+                return;
+              }
+              const done = applyScore(
+                1,
+                +1,
+                `✅ Point: Eau → bordure adverse.`,
+              );
+              if (!done) endTurn(`À ${pL.name} de jouer.`);
+              return;
+            }
+          }
+
+          if (!insidePool(ball.x, ball.y)) {
+            const done = applyScore(
+              ball.lastShooter,
+              -1,
+              `❌ Sortie bassin (-1).`,
+            );
+            if (!done)
+              endTurn(`À ${players[1 - ball.lastShooter].name} de jouer.`);
+            return;
+          }
+
+          ball.vx *= friction;
+          ball.vy *= friction;
+
+          if (Math.hypot(ball.vx, ball.vy) < minStop) {
+            ball.moving = false;
+            endTurn(`Échange terminé. À ${players[turn].name} de jouer.`);
+          }
+        }
+
+        // Tir
+        let aiming = false;
+        let aimStart = null;
+        let aimPos = null;
+
+        function pos(e) {
+          const r = canvas.getBoundingClientRect();
+          return {
+            x: (e.clientX - r.left) * (canvas.width / r.width),
+            y: (e.clientY - r.top) * (canvas.height / r.height),
+          };
+        }
+
+        canvas.addEventListener("mousedown", (e) => {
+          if (ball.moving) return;
+          const p = pos(e);
+          if (Math.hypot(p.x - ball.x, p.y - ball.y) < 46) {
+            aiming = true;
+            aimStart = { x: ball.x, y: ball.y };
+            aimPos = p;
+          }
+        });
+
+        canvas.addEventListener("mousemove", (e) => {
+          if (!aiming) return;
+          aimPos = pos(e);
+        });
+
+        window.addEventListener("mouseup", (e) => {
+          if (!aiming) return;
+          aiming = false;
+
+          const p = pos(e);
+          aimPos = p;
+
+          const dx = aimStart.x - aimPos.x;
+          const dy = aimStart.y - aimPos.y;
+
+          const power = Math.min(maxLaunchPower, Math.hypot(dx, dy) / 11);
+          const angle = Math.atan2(dy, dx);
+
+          ball.vx = Math.cos(angle) * power;
+          ball.vy = Math.sin(angle) * power;
+          ball.moving = true;
+          ball.touchedWater = false;
+          ball.lastShooter = turn;
+
+          setMsg(`${players[turn].name} engage…`);
+        });
+
+        function drawStaminaHalo(player) {
+          const t = clamp(player.stamina / 100, 0, 1);
+          const alpha = 0.1 + 0.3 * t;
+          ctx.strokeStyle =
+            player.side === "L"
+              ? `rgba(0,242,254,${alpha})`
+              : `rgba(255,215,0,${alpha})`;
+          ctx.lineWidth = 6;
+          ctx.beginPath();
+          ctx.arc(player.x, player.y, player.r + 10, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        function draw() {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+          // fond
+          ctx.fillStyle = "rgba(6,17,33,0.92)";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+          // piscine
+          ctx.fillStyle = "#0a2742";
+          ctx.fillRect(pool.x, pool.y, pool.w, pool.h);
+
+          ctx.strokeStyle = "rgba(255,255,255,0.20)";
+          ctx.lineWidth = 2;
+          ctx.strokeRect(pool.x, pool.y, pool.w, pool.h);
+
+          // zones (debug doux)
+          ctx.fillStyle = "rgba(255,255,255,0.03)";
+          ctx.fillRect(
+            leftZone.xMin,
+            pool.y,
+            leftZone.xMax - leftZone.xMin,
+            pool.h,
+          );
+          ctx.fillRect(
+            rightZone.xMin,
+            pool.y,
+            rightZone.xMax - rightZone.xMin,
+            pool.h,
+          );
+
+          // mur adverse highlight
+          ctx.lineWidth = 6;
+          ctx.strokeStyle = "rgba(0,242,254,0.55)";
+          ctx.beginPath();
+          if (ball.lastShooter === 0) {
+            ctx.moveTo(pool.x + pool.w, pool.y);
+            ctx.lineTo(pool.x + pool.w, pool.y + pool.h);
+          } else {
+            ctx.moveTo(pool.x, pool.y);
+            ctx.lineTo(pool.x, pool.y + pool.h);
+          }
+          ctx.stroke();
+
+          // boosters
+          for (const b of boosters) {
+            ctx.fillStyle = "rgba(0,242,254,0.85)";
+            ctx.beginPath();
+            ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.strokeStyle = "rgba(255,255,255,0.18)";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(b.x, b.y, b.r + 4, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+
+          // preview
+          if (!ball.moving && aiming && aimStart && aimPos) {
+            const dx = aimStart.x - aimPos.x;
+            const dy = aimStart.y - aimPos.y;
+            const power = Math.min(maxLaunchPower, Math.hypot(dx, dy) / 11);
+            const angle = Math.atan2(dy, dx);
+            const pvx = Math.cos(angle) * power;
+            const pvy = Math.sin(angle) * power;
+
+            const pts = predictPath(ball.x, ball.y, pvx, pvy, 220);
+            ctx.strokeStyle = "rgba(0,242,254,0.55)";
+            ctx.lineWidth = 2;
+            ctx.setLineDash([6, 8]);
+            ctx.beginPath();
+            ctx.moveTo(ball.x, ball.y);
+            for (let i = 0; i < pts.length; i += 2)
+              ctx.lineTo(pts[i][0], pts[i][1]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+          }
+
+          // joueurs + halo stamina
+          drawStaminaHalo(pL);
+          drawStaminaHalo(pR);
+
+          for (const pl of players) {
+            ctx.fillStyle = pl.color;
+            ctx.beginPath();
+            ctx.arc(pl.x, pl.y, pl.r, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = "rgba(255,255,255,0.85)";
+            ctx.font = "12px system-ui";
+            ctx.textAlign = "center";
+            ctx.fillText(pl.name, pl.x, pl.y - pl.r - 10);
+          }
+
+          // balle
+          ctx.fillStyle = "white";
+          ctx.beginPath();
+          ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+          ctx.fill();
+
+          // halo touchedWater
+          if (ball.touchedWater) {
+            ctx.strokeStyle = "rgba(0,242,254,0.7)";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, ball.r + 6, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+
+          // viseur
+          if (!ball.moving && aiming && aimStart && aimPos) {
+            ctx.strokeStyle = "rgba(0,242,254,0.9)";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(aimStart.x, aimStart.y);
+            ctx.lineTo(aimPos.x, aimPos.y);
+            ctx.stroke();
+          }
+        }
+
+        function loop() {
+          movePlayers();
+          updateUI();
+          updatePhysics();
+          draw();
+          requestAnimationFrame(loop);
+        }
+
+        // init
+        startRally(`À ${players[turn].name} de jouer.`);
+        loop();
+      })();
+    </script>
+  </body>
+</html>
